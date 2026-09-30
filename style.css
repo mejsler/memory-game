@@ -55,6 +55,7 @@ a {
   padding: 1.25rem 1.5rem;
   border-right: var(--line-hairline);
 }
+
 .panel:last-child {
   border-right: none;
 }
@@ -66,11 +67,20 @@ a {
   letter-spacing: -0.04em;
   line-height: 1;
 }
+
 .header-subtitle {
   margin-top: 0.5rem;
   font-size: 0.75rem;
   letter-spacing: 0.12em;
   color: var(--text-muted);
+}
+
+.header-stats {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .stats-label {
@@ -80,17 +90,21 @@ a {
   margin-bottom: 0.5rem;
   font-size: 0.8rem;
 }
+
 .stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  row-gap: 0.35rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  row-gap: 0;
+  width: 100%;
   column-gap: 1.5rem;
   font-size: 0.8rem;
 }
+
 .stat-item .k {
   color: var(--text-muted);
   margin-right: 0.3rem;
 }
+
 .stat-item .v {
   color: var(--text-pure);
   font-weight: 700;
@@ -100,8 +114,9 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 0.75rem;
+  gap: 1.5rem;
 }
+
 .action-btn {
   width: 100%;
   height: 100%;
@@ -120,10 +135,12 @@ a {
   position: relative;
   transition: all 0.15s ease;
 }
+
 .action-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-pure);
 }
+
 .btn-icon {
   width: 18px;
   height: 18px;
@@ -165,17 +182,25 @@ a {
   z-index: 5;
 }
 
-.text-center { text-align: center; }
-.text-right { text-align: right; }
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
 
 @media (max-width: 860px) {
   .archive-header {
     grid-template-columns: 1fr;
+    border-bottom: none;
   }
+
   .panel {
     border-right: none;
     border-bottom: var(--line-hairline);
   }
+
   .game-board {
     grid-template-columns: repeat(4, minmax(65px, 90px));
     gap: 8px;
