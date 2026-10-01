@@ -115,11 +115,56 @@ statsGrid.append(
 
 const movesValue = statsGrid.querySelector('#movesVal');
 const matchesValue = statsGrid.querySelector('#matchesVal');
+const timerValue = statsGrid.querySelector('#timerVal');
 let moveCount = 0;
 let matchesCount = 0;
 let firstSelectedCard = null;
 let mismatchTimeout = null;
 let gameFinished = false;
+let timerStartedAt = null;
+let timerIntervalId = null;
+let elapsedSeconds = 0;
+
+timerValue.setAttribute('aria-live', 'off');
+
+function formatTime(seconds) {
+	const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+	const remainingSeconds = String(seconds % 60).padStart(2, '0');
+
+	return `${minutes}:${remainingSeconds}`;
+}
+
+function updateTimer() {
+	if (timerStartedAt === null) {
+		return;
+	}
+
+	elapsedSeconds = Math.floor((Date.now() - timerStartedAt) / 1000);
+	timerValue.textContent = formatTime(elapsedSeconds);
+}
+
+function startTimer() {
+	if (timerIntervalId !== null || gameFinished) {
+		return;
+	}
+
+	timerStartedAt = Date.now() - elapsedSeconds * 1000;
+	timerIntervalId = window.setInterval(updateTimer, 1000);
+}
+
+function stopTimer() {
+	if (timerIntervalId !== null) {
+		window.clearInterval(timerIntervalId);
+		timerIntervalId = null;
+	}
+
+	if (timerStartedAt !== null) {
+		elapsedSeconds = Math.floor((Date.now() - timerStartedAt) / 1000);
+		timerStartedAt = null;
+	}
+
+	timerValue.textContent = formatTime(elapsedSeconds);
+}
 
 function renderCards() {
 	const deck = shuffleCards(cardImages.flatMap((card) => [card, { ...card }]));
@@ -161,6 +206,9 @@ function startNewGame() {
 	moveCount = 0;
 	matchesCount = 0;
 	gameFinished = false;
+	stopTimer();
+	elapsedSeconds = 0;
+	timerValue.textContent = '00:00';
 	movesValue.textContent = '0';
 	matchesValue.textContent = '0 / 8';
 	closeModal(victoryModal);
@@ -177,6 +225,7 @@ function selectCard(cardButton) {
 		return;
 	}
 
+	startTimer();
 	cardButton.classList.add('is-face-up');
 	cardButton.setAttribute('aria-pressed', 'true');
 	cardButton.setAttribute('aria-label', `Card ${Number(cardButton.dataset.cardIndex) + 1}, face up`);
@@ -207,6 +256,7 @@ function selectCard(cardButton) {
 
 		if (matchesCount === 8) {
 			gameFinished = true;
+			stopTimer();
 			showVictoryModal();
 		}
 
