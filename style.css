@@ -207,8 +207,9 @@ a {
   width: 100%;
   height: 100%;
   max-width: none;
-  object-fit: cover;
+  object-fit:contain;
   transition: transform 0.2s var(--ease-snap);
+  mix-blend-mode: lighten;
 }
 
 .game-board .card-face {
@@ -223,16 +224,45 @@ a {
   visibility: visible;
 }
 
-@media (orientation: landscape) {
-  .game-board img {
-    inset: auto;
-    top: 50%;
-    left: 50%;
-    width: 100cqh;
-    height: 100cqw;
-    transform: translate(-50%, -50%) rotate(90deg);
-  }
+.game-modal {
+  width: min(90vw, 30rem);
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-panel);
+  color: var(--text-pure);
 }
+
+.game-modal::backdrop {
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.game-modal-content {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 5vw, 2rem);
+}
+
+.game-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.game-modal-message {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.game-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+
 
 
 .archive-footer {

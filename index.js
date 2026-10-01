@@ -46,6 +46,39 @@ function shuffleCards(cards) {
 	return cards;
 }
 
+function createModal(content) {
+	const modal = createElement('dialog', 'game-modal');
+
+	modal.append(content);
+	modal.addEventListener('click', (event) => {
+		if (event.target === modal) {
+			closeModal(modal);
+		}
+	});
+	modal.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		closeModal(modal);
+	});
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && modal.open) {
+			event.preventDefault();
+			closeModal(modal);
+		}
+	});
+
+	return modal;
+}
+
+function openModal(modal) {
+	modal.showModal();
+}
+
+function closeModal(modal) {
+	if (modal.open) {
+		modal.close();
+	}
+}
+
 const appShell = createElement('div', 'archive-shell');
 const header = createElement('header', 'archive-header');
 const identityPanel = createElement('div', 'panel header-identity');
@@ -66,7 +99,13 @@ const cardImages = Array.from({ length: 8 }, (_, cardIndex) => ({
 	pairId: cardIndex,
 	imagePath: `assets/images/card-${cardIndex + 1}.jpg`
 }));
-const deck = shuffleCards(cardImages.flatMap((card) => [card, { ...card }]));
+const victoryContent = createElement('div', 'game-modal-content');
+const victoryTitle = createElement('h2', 'game-modal-title', 'You win!');
+const victoryMessage = createElement('p', 'game-modal-message');
+const victoryActions = createElement('div', 'game-modal-actions');
+const newGameButton = createActionButton('btnModalRestart', 'NEW GAME', 'Start a new game');
+const closeVictoryButton = createActionButton('btnModalClose', 'CLOSE', 'Close victory modal');
+const victoryModal = createModal(victoryContent);
 
 statsGrid.append(
 	createStatItem('TIME', '00:00', 'timerVal'),
@@ -80,9 +119,57 @@ let moveCount = 0;
 let matchesCount = 0;
 let firstSelectedCard = null;
 let mismatchTimeout = null;
+let gameFinished = false;
+
+function renderCards() {
+	const deck = shuffleCards(cardImages.flatMap((card) => [card, { ...card }]));
+
+	gameBoard.replaceChildren();
+	deck.forEach((card, cardIndex) => {
+		const cardButton = createElement('button', 'game-card');
+		const cardBack = createElement('img', 'card-back');
+		const cardFace = createElement('img', 'card-face');
+
+		cardButton.type = 'button';
+		cardButton.dataset.pairId = card.pairId;
+		cardButton.dataset.cardIndex = cardIndex;
+		cardButton.setAttribute('aria-pressed', 'false');
+		cardButton.setAttribute('aria-label', `Face-down card ${cardIndex + 1}`);
+		cardButton.addEventListener('click', () => selectCard(cardButton));
+
+		cardBack.src = 'assets/images/card-back.jpg';
+		cardBack.alt = '';
+		cardFace.src = card.imagePath;
+		cardFace.alt = '';
+		cardButton.append(cardBack, cardFace);
+		gameBoard.append(cardButton);
+	});
+}
+
+function showVictoryModal() {
+	victoryMessage.textContent = `You found all 8 pairs in ${moveCount} moves.`;
+	openModal(victoryModal);
+}
+
+function startNewGame() {
+	if (mismatchTimeout !== null) {
+		window.clearTimeout(mismatchTimeout);
+		mismatchTimeout = null;
+	}
+
+	firstSelectedCard = null;
+	moveCount = 0;
+	matchesCount = 0;
+	gameFinished = false;
+	movesValue.textContent = '0';
+	matchesValue.textContent = '0 / 8';
+	closeModal(victoryModal);
+	renderCards();
+}
 
 function selectCard(cardButton) {
 	if (
+		gameFinished ||
 		mismatchTimeout !== null ||
 		cardButton.classList.contains('is-face-up') ||
 		cardButton.classList.contains('is-matched')
@@ -118,6 +205,11 @@ function selectCard(cardButton) {
 			);
 		});
 
+		if (matchesCount === 8) {
+			gameFinished = true;
+			showVictoryModal();
+		}
+
 		return;
 	}
 
@@ -135,10 +227,18 @@ function selectCard(cardButton) {
 	}, 1000);
 }
 
+victoryTitle.id = 'victoryTitle';
+victoryModal.setAttribute('aria-labelledby', victoryTitle.id);
+victoryActions.append(newGameButton, closeVictoryButton);
+victoryContent.append(victoryTitle, victoryMessage, victoryActions);
+newGameButton.addEventListener('click', startNewGame);
+closeVictoryButton.addEventListener('click', () => closeModal(victoryModal));
+
 actionsPanel.append(
 	createActionButton('btnRestart', 'RESTART', 'Restart Game'),
 	createActionButton('btnScores', 'SCORES', 'Leaderboard')
 );
+	actionsPanel.querySelector('#btnRestart').addEventListener('click', startNewGame);
 
 identityPanel.append(title, subtitle);
 statsPanel.append(statsLabel, statsGrid);
@@ -146,26 +246,7 @@ header.append(identityPanel, statsPanel, actionsPanel);
 
 gameBoard.id = 'gameBoard';
 gameBoard.setAttribute('aria-label', 'Card Grid');
-
-deck.forEach((card, cardIndex) => {
-	const cardButton = createElement('button', 'game-card');
-	const cardBack = createElement('img', 'card-back');
-	const cardFace = createElement('img', 'card-face');
-
-	cardButton.type = 'button';
-	cardButton.dataset.pairId = card.pairId;
-	cardButton.dataset.cardIndex = cardIndex;
-	cardButton.setAttribute('aria-pressed', 'false');
-	cardButton.setAttribute('aria-label', `Face-down card ${cardIndex + 1}`);
-	cardButton.addEventListener('click', () => selectCard(cardButton));
-
-	cardBack.src = 'assets/images/card-back.jpg';
-	cardBack.alt = '';
-	cardFace.src = card.imagePath;
-	cardFace.alt = '';
-	cardButton.append(cardBack, cardFace);
-	gameBoard.append(cardButton);
-});
+renderCards();
 
 boardFrame.append(gameBoard);
 main.append(boardFrame);
@@ -178,4 +259,4 @@ author.append(authorLink);
 footer.append(author, course);
 
 appShell.append(header, main, footer);
-document.body.append(appShell);
+document.body.append(appShell, victoryModal);
