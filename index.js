@@ -358,9 +358,14 @@ function selectCard(cardButton) {
 		return;
 	}
 
+	selectedCards.forEach((mismatchedCard) => {
+		mismatchedCard.classList.add('is-mismatched');
+	});
+
 	mismatchTimeout = window.setTimeout(() => {
 		selectedCards.forEach((mismatchedCard) => {
 			mismatchedCard.classList.remove('is-face-up');
+			mismatchedCard.classList.remove('is-mismatched');
 			mismatchedCard.setAttribute('aria-pressed', 'false');
 			mismatchedCard.setAttribute(
 				'aria-label',

@@ -206,20 +206,38 @@ a {
   height: 100%;
   max-width: none;
   object-fit:contain;
-  transition: transform 0.2s var(--ease-snap);
+  transition: transform 0.2s var(--ease-snap), opacity 0.18s ease;
   mix-blend-mode: lighten;
+}
+
+.game-board .card-back {
+  opacity: 1;
+  transition: opacity 0.18s ease, visibility 0s 0.18s;
 }
 
 .game-board .card-face {
   visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.18s ease, visibility 0s 0.18s;
 }
 
 .game-card.is-face-up .card-back {
   visibility: hidden;
+  opacity: 0;
 }
 
 .game-card.is-face-up .card-face {
   visibility: visible;
+  opacity: 1;
+  transition: opacity 0.18s ease, visibility 0s;
+}
+
+.game-card.is-matched {
+  animation: card-match-pulse 420ms var(--ease-snap);
+}
+
+.game-card.is-mismatched {
+  animation: card-mismatch-shake 300ms ease-in-out;
 }
 
 .game-modal {
@@ -234,8 +252,16 @@ a {
   color: var(--text-pure);
 }
 
+.game-modal[open] {
+  animation: modal-enter 220ms var(--ease-snap) both;
+}
+
 .game-modal::backdrop {
   background: rgba(0, 0, 0, 0.78);
+}
+
+.game-modal[open]::backdrop {
+  animation: backdrop-enter 180ms ease-out both;
 }
 
 .game-modal-content {
@@ -285,6 +311,55 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+@keyframes card-match-pulse {
+  50% {
+    box-shadow: inset 0 0 0 3px var(--safety-orange);
+  }
+}
+
+@keyframes card-mismatch-shake {
+  25%, 75% {
+    transform: translateX(-3px);
+  }
+
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 
