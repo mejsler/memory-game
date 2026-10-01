@@ -83,7 +83,6 @@ const appShell = createElement('div', 'archive-shell');
 const header = createElement('header', 'archive-header');
 const identityPanel = createElement('div', 'panel header-identity');
 const title = createElement('h1', 'header-title', 'MEMORY GAME');
-const subtitle = createElement('p', 'header-subtitle', 'ROLLING SCOPES SCHOOL TASK');
 const statsPanel = createElement('div', 'panel header-stats');
 const statsLabel = createElement('div', 'stats-label', 'STATS');
 const statsGrid = createElement('div', 'stats-grid');
@@ -93,8 +92,9 @@ const boardFrame = createElement('div', 'board-frame');
 const gameBoard = createElement('section', 'game-board');
 const footer = createElement('footer', 'archive-footer');
 const author = createElement('div', 'footer-col');
-const course = createElement('div', 'footer-col text-right', 'Full-Stack JS 2026 Q3');
+const course = createElement('div', 'footer-col text-right', 'RS School Full-Stack JS 2026 Q3');
 const authorLink = createElement('a', '', 'MEJSLER');
+const leaderboardStorageKey = 'memoryGameLeaderboard';
 const cardImages = Array.from({ length: 8 }, (_, cardIndex) => ({
 	pairId: cardIndex,
 	imagePath: `assets/images/card-${cardIndex + 1}.jpg`
@@ -106,6 +106,12 @@ const victoryActions = createElement('div', 'game-modal-actions');
 const newGameButton = createActionButton('btnModalRestart', 'NEW GAME', 'Start a new game');
 const closeVictoryButton = createActionButton('btnModalClose', 'CLOSE', 'Close victory modal');
 const victoryModal = createModal(victoryContent);
+const leaderboardContent = createElement('div', 'game-modal-content');
+const leaderboardTitle = createElement('h2', 'game-modal-title', 'Leaderboard');
+const leaderboardResults = createElement('div', 'leaderboard-results');
+const leaderboardActions = createElement('div', 'game-modal-actions');
+const closeLeaderboardButton = createActionButton('btnLeaderboardClose', 'CLOSE', 'Close leaderboard');
+const leaderboardModal = createModal(leaderboardContent);
 
 statsGrid.append(
 	createStatItem('TIME', '00:00', 'timerVal'),
@@ -164,6 +170,94 @@ function stopTimer() {
 	}
 
 	timerValue.textContent = formatTime(elapsedSeconds);
+}
+
+function loadLeaderboardScores() {
+	try {
+		const scores = JSON.parse(window.localStorage.getItem(leaderboardStorageKey) || '[]');
+
+		if (!Array.isArray(scores)) {
+			return [];
+		}
+
+		return scores.filter((score) =>
+			score && Number.isInteger(score.moves) && Number.isFinite(score.timestamp)
+		);
+	} catch {
+		return [];
+	}
+}
+
+function saveWinningScore() {
+	const scores = loadLeaderboardScores();
+	scores.push({ moves: moveCount, durationSeconds: elapsedSeconds, timestamp: Date.now() });
+	scores.sort((firstScore, secondScore) =>
+		firstScore.moves - secondScore.moves || firstScore.timestamp - secondScore.timestamp
+	);
+
+	try {
+		window.localStorage.setItem(leaderboardStorageKey, JSON.stringify(scores.slice(0, 10)));
+	} catch (error) {
+		console.error('Unable to save leaderboard score.', error);
+	}
+}
+
+function formatScoreDate(timestamp) {
+	const date = new Date(timestamp);
+	const day = String(date.getDate()).padStart(2, '0');
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+
+	return `${day}.${month}.${date.getFullYear()}`;
+}
+
+function renderLeaderboard() {
+	const scores = loadLeaderboardScores();
+
+	leaderboardResults.replaceChildren();
+	if (scores.length === 0) {
+		leaderboardResults.append(createElement('p', 'leaderboard-empty', 'No results yet.'));
+		return;
+	}
+
+	const table = createElement('table', 'leaderboard-table');
+	const header = createElement('tr');
+	const tableHead = createElement('thead');
+	const tableBody = createElement('tbody');
+
+	['Place', 'Moves', 'Duration', 'Date'].forEach((label) => {
+		const heading = createElement('th', '', label);
+		heading.scope = 'col';
+		header.append(heading);
+	});
+	tableHead.append(header);
+
+	scores
+		.sort((firstScore, secondScore) =>
+			firstScore.moves - secondScore.moves || firstScore.timestamp - secondScore.timestamp
+		)
+		.slice(0, 10)
+		.forEach((score, scoreIndex) => {
+			const row = createElement('tr');
+			row.append(
+				createElement('td', '', String(scoreIndex + 1)),
+				createElement('td', '', String(score.moves)),
+				createElement(
+					'td',
+					'',
+					Number.isInteger(score.durationSeconds) ? formatTime(score.durationSeconds) : '--:--'
+				),
+				createElement('td', '', formatScoreDate(score.timestamp))
+			);
+			tableBody.append(row);
+		});
+
+	table.append(tableHead, tableBody);
+	leaderboardResults.append(table);
+}
+
+function showLeaderboard() {
+	renderLeaderboard();
+	openModal(leaderboardModal);
 }
 
 function renderCards() {
@@ -257,6 +351,7 @@ function selectCard(cardButton) {
 		if (matchesCount === 8) {
 			gameFinished = true;
 			stopTimer();
+			saveWinningScore();
 			showVictoryModal();
 		}
 
@@ -283,14 +378,20 @@ victoryActions.append(newGameButton, closeVictoryButton);
 victoryContent.append(victoryTitle, victoryMessage, victoryActions);
 newGameButton.addEventListener('click', startNewGame);
 closeVictoryButton.addEventListener('click', () => closeModal(victoryModal));
+leaderboardTitle.id = 'leaderboardTitle';
+leaderboardModal.setAttribute('aria-labelledby', leaderboardTitle.id);
+leaderboardActions.append(closeLeaderboardButton);
+leaderboardContent.append(leaderboardTitle, leaderboardResults, leaderboardActions);
+closeLeaderboardButton.addEventListener('click', () => closeModal(leaderboardModal));
 
 actionsPanel.append(
 	createActionButton('btnRestart', 'RESTART', 'Restart Game'),
 	createActionButton('btnScores', 'SCORES', 'Leaderboard')
 );
 	actionsPanel.querySelector('#btnRestart').addEventListener('click', startNewGame);
+	actionsPanel.querySelector('#btnScores').addEventListener('click', showLeaderboard);
 
-identityPanel.append(title, subtitle);
+identityPanel.append(title);
 statsPanel.append(statsLabel, statsGrid);
 header.append(identityPanel, statsPanel, actionsPanel);
 
@@ -309,4 +410,4 @@ author.append(authorLink);
 footer.append(author, course);
 
 appShell.append(header, main, footer);
-document.body.append(appShell, victoryModal);
+document.body.append(appShell, victoryModal, leaderboardModal);

@@ -63,19 +63,17 @@ a {
   border-right: none;
 }
 
+.header-identity {
+  display: flex;
+  align-items: center;
+}
+
 .header-title {
   font-family: var(--font-display);
   font-size: clamp(1.8rem, 3vw, 2.8rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
-}
-
-.header-subtitle {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
 }
 
 .header-stats {
@@ -254,6 +252,33 @@ a {
 .game-modal-message {
   color: var(--text-muted);
   line-height: 1.6;
+}
+
+.leaderboard-results {
+  min-height: 2rem;
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.6rem 0.4rem;
+  border-bottom: var(--line-hairline);
+}
+
+.leaderboard-table th {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.leaderboard-empty {
+  color: var(--text-muted);
 }
 
 .game-modal-actions {
