@@ -74,6 +74,67 @@ statsGrid.append(
 	createStatItem('MATCHES', '0 / 8', 'matchesVal')
 );
 
+const movesValue = statsGrid.querySelector('#movesVal');
+const matchesValue = statsGrid.querySelector('#matchesVal');
+let moveCount = 0;
+let matchesCount = 0;
+let firstSelectedCard = null;
+let mismatchTimeout = null;
+
+function selectCard(cardButton) {
+	if (
+		mismatchTimeout !== null ||
+		cardButton.classList.contains('is-face-up') ||
+		cardButton.classList.contains('is-matched')
+	) {
+		return;
+	}
+
+	cardButton.classList.add('is-face-up');
+	cardButton.setAttribute('aria-pressed', 'true');
+	cardButton.setAttribute('aria-label', `Card ${Number(cardButton.dataset.cardIndex) + 1}, face up`);
+
+	if (firstSelectedCard === null) {
+		firstSelectedCard = cardButton;
+		return;
+	}
+
+	moveCount += 1;
+	movesValue.textContent = String(moveCount);
+
+	const firstCard = firstSelectedCard;
+	const selectedCards = [firstCard, cardButton];
+	firstSelectedCard = null;
+
+	if (firstCard.dataset.pairId === cardButton.dataset.pairId) {
+		matchesCount += 1;
+		matchesValue.textContent = `${matchesCount} / 8`;
+
+		selectedCards.forEach((matchedCard) => {
+			matchedCard.classList.add('is-matched');
+			matchedCard.setAttribute(
+				'aria-label',
+				`Card ${Number(matchedCard.dataset.cardIndex) + 1}, matched`
+			);
+		});
+
+		return;
+	}
+
+	mismatchTimeout = window.setTimeout(() => {
+		selectedCards.forEach((mismatchedCard) => {
+			mismatchedCard.classList.remove('is-face-up');
+			mismatchedCard.setAttribute('aria-pressed', 'false');
+			mismatchedCard.setAttribute(
+				'aria-label',
+				`Face-down card ${Number(mismatchedCard.dataset.cardIndex) + 1}`
+			);
+		});
+
+		mismatchTimeout = null;
+	}, 1000);
+}
+
 actionsPanel.append(
 	createActionButton('btnRestart', 'RESTART', 'Restart Game'),
 	createActionButton('btnScores', 'SCORES', 'Leaderboard')
@@ -93,7 +154,10 @@ deck.forEach((card, cardIndex) => {
 
 	cardButton.type = 'button';
 	cardButton.dataset.pairId = card.pairId;
+	cardButton.dataset.cardIndex = cardIndex;
+	cardButton.setAttribute('aria-pressed', 'false');
 	cardButton.setAttribute('aria-label', `Face-down card ${cardIndex + 1}`);
+	cardButton.addEventListener('click', () => selectCard(cardButton));
 
 	cardBack.src = 'assets/images/card-back.jpg';
 	cardBack.alt = '';
